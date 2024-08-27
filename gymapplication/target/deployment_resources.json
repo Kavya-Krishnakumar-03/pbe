@@ -1,0 +1,27 @@
+{
+  "api_handler" : {
+    "name" : "api_handler",
+    "lambda_path" : "C:\\Users\\kavya_krishnakumar\\pbe\\gymapplication",
+    "version" : "1.0.0",
+    "func_name" : "com.gymapplication.handler.ApiHandler",
+    "deployment_package" : "gymapplication-1.0.0.jar",
+    "resource_type" : "lambda",
+    "runtime" : "java17",
+    "architectures" : [ "x86_64" ],
+    "iam_role_name" : "api_handler-role",
+    "memory" : 1024,
+    "timeout" : 300,
+    "subnet_ids" : [ ],
+    "security_group_ids" : [ ],
+    "dependencies" : [ ],
+    "event_sources" : [ ],
+    "env_variables" : {
+      "tables_table" : "${tables_table}",
+      "booking_userpool" : "${booking_userpool}",
+      "region" : "${region}"
+    },
+    "publish_version" : false,
+    "logs_expiration" : "${logs_expiration}",
+    "snap_start" : "None"
+  }
+}
