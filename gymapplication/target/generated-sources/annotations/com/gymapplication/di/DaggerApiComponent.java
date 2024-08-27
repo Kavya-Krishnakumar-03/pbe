@@ -84,12 +84,12 @@ public final class DaggerApiComponent {
 
     }
 
-    private CognitoService cognitoService() {
-      return new CognitoService(provideCognitoClientProvider.get());
-    }
-
     private ProfileUpdateService profileUpdateService() {
       return new ProfileUpdateService(provideDynamoDBProvider.get());
+    }
+
+    private CognitoService cognitoService() {
+      return new CognitoService(provideCognitoClientProvider.get());
     }
 
     @SuppressWarnings("unchecked")
@@ -110,8 +110,8 @@ public final class DaggerApiComponent {
     private ApiHandler injectApiHandler(ApiHandler instance) {
       ApiHandler_MembersInjector.injectSignupService(instance, provideSignupServiceProvider.get());
       ApiHandler_MembersInjector.injectSigninService(instance, provideSigninServiceProvider.get());
-      ApiHandler_MembersInjector.injectCognitoService(instance, cognitoService());
       ApiHandler_MembersInjector.injectProfileUpdateService(instance, profileUpdateService());
+      ApiHandler_MembersInjector.injectCognitoService(instance, cognitoService());
       return instance;
     }
   }

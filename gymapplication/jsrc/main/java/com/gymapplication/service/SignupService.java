@@ -30,9 +30,14 @@ public class SignupService {
         if (validationError != null) {
             return validationError;
         }
+
+        // Determine user role based on the email
+        String role = determineUserRole(userDetails.get("email"));
+
         try {
             List<AttributeType> userAttributes = new ArrayList<>();
             userAttributes.add(AttributeType.builder().name("email").value(userDetails.get("email")).build());
+//            userAttributes.add(AttributeType.builder().name("custom:role").value(role).build()); // Set the role attribute
 
             AdminCreateUserRequest createUserRequest = AdminCreateUserRequest.builder()
                     .userPoolId(userPoolId)
@@ -50,10 +55,13 @@ public class SignupService {
             item.put("name", new AttributeValue().withS(userDetails.get("name")));
             item.put("target", new AttributeValue().withS(userDetails.get("target")));
             item.put("preferableActivity", new AttributeValue().withS(userDetails.get("preferableActivity")));
+            item.put("role", new AttributeValue().withS(role)); // Store the role in DynamoDB
 
             amazonDynamoDB.putItem(new PutItemRequest()
                     .withTableName(System.getenv("tables_table"))
                     .withItem(item));
+
+            System.out.println("User signed up successfully.");
 
             return null; // No error
         } catch (CognitoIdentityProviderException e) {
@@ -79,12 +87,47 @@ public class SignupService {
             return "Preferable activity is required.";
         }
 
+        // Additional validations for string fields
+        if (!(userDetails.get("name") instanceof String)) {
+            return "Name must be a string.";
+        }
+        if (!(userDetails.get("target") instanceof String)) {
+            return "Target must be a string.";
+        }
+        if (!(userDetails.get("preferableActivity") instanceof String)) {
+            return "Preferable activity must be a string.";
+        }
+
         // Check for duplicate email (optional, can be handled by Cognito as well)
         if (isEmailAlreadyRegistered(userDetails.get("email"))) {
             return "Email is already registered.";
         }
 
         return null; // No validation errors
+    }
+
+    private String determineUserRole(String email) {
+        if (isEmailInTable(email, System.getenv("coaches_table"))) {
+            return "coach";
+        } else if (isEmailInTable(email, System.getenv("admins_table"))) {
+            return "admin";
+        } else {
+            return "client"; // Default role
+        }
+    }
+
+    private boolean isEmailInTable(String email, String tableName) {
+        try {
+            Map<String, AttributeValue> key = new HashMap<>();
+            key.put("email", new AttributeValue().withS(email));
+
+            Map<String, AttributeValue> item = amazonDynamoDB.getItem(tableName, key).getItem();
+
+            return item != null && !item.isEmpty();
+        } catch (Exception e) {
+            System.err.println("Error checking email in " + tableName + " table: " + e.getMessage());
+            return false; // In case of an error, assume the email is not in the table
+        }
     }
 
     private boolean isEmailAlreadyRegistered(String email) {
@@ -103,7 +146,6 @@ public class SignupService {
 
     private boolean isEmailInDynamoDB(String email) {
         try {
-            // Query DynamoDB to check if the email already exists
             Map<String, AttributeValue> key = new HashMap<>();
             key.put("email", new AttributeValue().withS(email));
 
@@ -133,5 +175,3 @@ public class SignupService {
         }
     }
 }
-
-

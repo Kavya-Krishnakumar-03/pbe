@@ -28,33 +28,33 @@ public final class ApiHandler_MembersInjector implements MembersInjector<ApiHand
 
   private final Provider<SigninService> signinServiceProvider;
 
-  private final Provider<CognitoService> cognitoServiceProvider;
-
   private final Provider<ProfileUpdateService> profileUpdateServiceProvider;
+
+  private final Provider<CognitoService> cognitoServiceProvider;
 
   public ApiHandler_MembersInjector(Provider<SignupService> signupServiceProvider,
       Provider<SigninService> signinServiceProvider,
-      Provider<CognitoService> cognitoServiceProvider,
-      Provider<ProfileUpdateService> profileUpdateServiceProvider) {
+      Provider<ProfileUpdateService> profileUpdateServiceProvider,
+      Provider<CognitoService> cognitoServiceProvider) {
     this.signupServiceProvider = signupServiceProvider;
     this.signinServiceProvider = signinServiceProvider;
-    this.cognitoServiceProvider = cognitoServiceProvider;
     this.profileUpdateServiceProvider = profileUpdateServiceProvider;
+    this.cognitoServiceProvider = cognitoServiceProvider;
   }
 
   public static MembersInjector<ApiHandler> create(Provider<SignupService> signupServiceProvider,
       Provider<SigninService> signinServiceProvider,
-      Provider<CognitoService> cognitoServiceProvider,
-      Provider<ProfileUpdateService> profileUpdateServiceProvider) {
-    return new ApiHandler_MembersInjector(signupServiceProvider, signinServiceProvider, cognitoServiceProvider, profileUpdateServiceProvider);
+      Provider<ProfileUpdateService> profileUpdateServiceProvider,
+      Provider<CognitoService> cognitoServiceProvider) {
+    return new ApiHandler_MembersInjector(signupServiceProvider, signinServiceProvider, profileUpdateServiceProvider, cognitoServiceProvider);
   }
 
   @Override
   public void injectMembers(ApiHandler instance) {
     injectSignupService(instance, signupServiceProvider.get());
     injectSigninService(instance, signinServiceProvider.get());
-    injectCognitoService(instance, cognitoServiceProvider.get());
     injectProfileUpdateService(instance, profileUpdateServiceProvider.get());
+    injectCognitoService(instance, cognitoServiceProvider.get());
   }
 
   @InjectedFieldSignature("com.gymapplication.handler.ApiHandler.signupService")
@@ -67,14 +67,14 @@ public final class ApiHandler_MembersInjector implements MembersInjector<ApiHand
     instance.signinService = signinService;
   }
 
-  @InjectedFieldSignature("com.gymapplication.handler.ApiHandler.cognitoService")
-  public static void injectCognitoService(ApiHandler instance, CognitoService cognitoService) {
-    instance.cognitoService = cognitoService;
-  }
-
   @InjectedFieldSignature("com.gymapplication.handler.ApiHandler.profileUpdateService")
   public static void injectProfileUpdateService(ApiHandler instance,
       ProfileUpdateService profileUpdateService) {
     instance.profileUpdateService = profileUpdateService;
+  }
+
+  @InjectedFieldSignature("com.gymapplication.handler.ApiHandler.cognitoService")
+  public static void injectCognitoService(ApiHandler instance, CognitoService cognitoService) {
+    instance.cognitoService = cognitoService;
   }
 }

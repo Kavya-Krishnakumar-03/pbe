@@ -1,5 +1,7 @@
+
 package com.gymapplication.service;
 
+import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 import software.amazon.awssdk.services.cognitoidentityprovider.CognitoIdentityProviderClient;
 import software.amazon.awssdk.services.cognitoidentityprovider.model.*;
 
@@ -15,10 +17,10 @@ public class SigninService {
         this.identityProviderClient = identityProviderClient;
     }
 
-    public String signInUser(Map<String, String> credentials, String userPoolId, String clientId) {
+    public APIGatewayProxyResponseEvent signInUser(Map<String, String> credentials, String userPoolId, String clientId) {
         String validationError = validateInput(credentials);
         if (validationError != null) {
-            throw new IllegalArgumentException(validationError);
+            return createErrorResponse(400, validationError);
         }
 
         try {
@@ -51,16 +53,28 @@ public class SigninService {
             }
 
             if (authResult == null || authResult.idToken() == null || authResult.idToken().isEmpty()) {
-                throw new RuntimeException("Authentication failed: no token received.");
+                return createErrorResponse(500, "Authentication failed: no token received.");
             }
 
-            return authResult.idToken();
+            return new APIGatewayProxyResponseEvent()
+                    .withStatusCode(200)
+                    .withBody("{\"id_token\":\"" + authResult.idToken() + "\"}");
         } catch (NotAuthorizedException e) {
-            throw new RuntimeException("Incorrect username or password.");
+
+            return createErrorResponse(401, "Incorrect username or password.");
+        } catch (UserNotFoundException e) {
+            return createErrorResponse(404, "User not found.");
         } catch (CognitoIdentityProviderException e) {
-            throw new RuntimeException("Failed to sign in user: " + e.getMessage(), e);
+            return createErrorResponse(500, "Failed to sign in user: " + e.getMessage());
         }
     }
+
+    private APIGatewayProxyResponseEvent createErrorResponse(int statusCode, String message) {
+        return new APIGatewayProxyResponseEvent()
+                .withStatusCode(statusCode)
+                .withBody("{\"statusCode\":" + statusCode + ", \"message\":\"" + message + "\"}");
+    }
+
 
     private String validateInput(Map<String, String> credentials) {
         if (credentials.get("email") == null || credentials.get("email").isEmpty()) {
@@ -72,5 +86,10 @@ public class SigninService {
         return null;
     }
 }
+
+
+
+
+
 
  

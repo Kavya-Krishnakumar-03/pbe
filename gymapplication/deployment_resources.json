@@ -1,41 +1,40 @@
-{"lambda-basic-execution": {
-  "policy_content": {
-    "Statement": [
-      {
-        "Action": [
-          "logs:CreateLogGroup",
-          "logs:CreateLogStream",
-          "logs:PutLogEvents",
-          "dynamodb:GetItem",
-          "dynamodb:Query",
-          "dynamodb:PutItem",
-          "dynamodb:Batch*",
-          "dynamodb:DeleteItem",
-          "ssm:PutParameter",
-          "ssm:GetParameter",
-          "kms:Decrypt",
-          "cognito-idp:AdminInitiateAuth",
-          "cognito-idp:AdminRespondToAuthChallenge",
-          "cognito-idp:SignUp",
-          "cognito-idp:ListUserPools",
-          "cognito-idp:ListUserPoolClients",
-          "cognito-idp:AdminCreateUser",
-          "cognito-idp:AdminConfirmSignUp",
-          "cognito-idp:CreateUserPoolClient",
-          "cognito-idp:AdminInitiateAuth",
-          "cognito-idp:AdminRespondToAuthChallenge",
-          "cognito-idp:AdminUpdateUserAttributes",
-          "dynamodb:UpdateItem",
-          "dynamodb:Scan"
-        ],
-        "Effect": "Allow",
-        "Resource": "*"
-      }
-    ],
-    "Version": "2012-10-17"
+{
+  "lambda-basic-execution": {
+    "policy_content": {
+      "Statement": [
+        {
+          "Action": [
+            "logs:CreateLogGroup",
+            "logs:CreateLogStream",
+            "logs:PutLogEvents",
+            "dynamodb:GetItem",
+            "dynamodb:Query",
+            "dynamodb:PutItem",
+            "dynamodb:Batch*",
+            "dynamodb:DeleteItem",
+            "ssm:PutParameter",
+            "ssm:GetParameter",
+            "kms:Decrypt",
+            "cognito-idp:AdminInitiateAuth",
+            "cognito-idp:AdminRespondToAuthChallenge",
+            "cognito-idp:SignUp",
+            "cognito-idp:ListUserPools",
+            "cognito-idp:ListUserPoolClients",
+            "cognito-idp:AdminCreateUser",
+            "cognito-idp:AdminConfirmSignUp",
+            "cognito-idp:CreateUserPoolClient",
+            "cognito-idp:AdminUpdateUserAttributes",
+            "dynamodb:UpdateItem",
+            "dynamodb:Scan"
+          ],
+          "Effect": "Allow",
+          "Resource": "*"
+        }
+      ],
+      "Version": "2012-10-17"
+    },
+    "resource_type": "iam_policy"
   },
-  "resource_type": "iam_policy"
-},
   "api_handler-role": {
     "predefined_policies": [],
     "principal_service": "lambda",
@@ -44,7 +43,6 @@
     ],
     "resource_type": "iam_role"
   },
-
   "Users": {
     "resource_type": "dynamodb_table",
     "hash_key_name": "email",
@@ -54,7 +52,6 @@
     "global_indexes": [],
     "autoscaling": []
   },
-
   "simple-booking-userpool": {
     "resource_type": "cognito_idp",
     "password_policy": {
@@ -71,12 +68,16 @@
     "username_attributes": [
       "email"
     ],
-    "custom_attributes": [],
+    "custom_attributes": [
+      {
+        "name": "role",
+        "type": "String"
+      }
+    ],
     "client": {
-      "client_name" : "api_client_syndicate"
+      "client_name": "api_client_syndicate"
     }
   },
-
   "gym_api": {
     "resource_type": "api_gateway",
     "deploy_stage": "api",
@@ -93,7 +94,7 @@
     "dependencies": [],
     "resources": {
       "/signup": {
-        "enable_cors": false,
+        "enable_cors": true,
         "POST": {
           "authorization_type": "NONE",
           "integration_type": "lambda",
@@ -116,7 +117,7 @@
         }
       },
       "/signin": {
-        "enable_cors": false,
+        "enable_cors": true,
         "POST": {
           "authorization_type": "NONE",
           "integration_type": "lambda",
@@ -138,9 +139,8 @@
           "default_error_pattern": true
         }
       },
-
       "/updateProfile": {
-        "enable_cors": false,
+        "enable_cors": true,
         "PUT": {
           "authorization_type": "authorizer",
           "integration_type": "lambda",
@@ -152,17 +152,15 @@
           },
           "responses": [
             {
-              "200": {
-                "status_code": "200",
-                "response_templates": {
-                  "application/json": "#set($inputRoot = $input.path('$'))\n$input.path('$.body')"
-                }
-              },
-              "500": {
-                "status_code": "500",
-                "response_templates": {
-                  "application/json": "#set($inputRoot = $input.path('$'))\n$input.path('$.body')"
-                }
+              "status_code": "200",
+              "response_templates": {
+                "application/json": "#set($inputRoot = $input.path('$'))\n$input.path('$.body')"
+              }
+            },
+            {
+              "status_code": "500",
+              "response_templates": {
+                "application/json": "#set($inputRoot = $input.path('$'))\n$input.path('$.body')"
               }
             }
           ],
@@ -183,9 +181,7 @@
           "default_error_pattern": true
         }
       }
-
     },
     "minimum_compression_size": 0
   }
 }
-

@@ -16,7 +16,9 @@
     "dependencies" : [ ],
     "event_sources" : [ ],
     "env_variables" : {
+      "admins_table" : "${admins_table}",
       "tables_table" : "${tables_table}",
+      "coaches_table" : "${coaches_table}",
       "booking_userpool" : "${booking_userpool}",
       "region" : "${region}"
     },
