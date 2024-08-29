@@ -1,22 +1,30 @@
 package com.gymapplication.handler;
 
+import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
-import com.gymapplication.service.ProfileUpdateService;
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.exceptions.JWTDecodeException;
+import com.auth0.jwt.interfaces.DecodedJWT;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gymapplication.service.SignupService;
 import com.gymapplication.service.SigninService;
 import com.gymapplication.service.CognitoService;
 import com.gymapplication.di.DaggerApiComponent;
+import com.gymapplication.service.LogoutService;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
+import com.gymapplication.service.ProfileUpdateService;
 import com.syndicate.deployment.annotations.environment.EnvironmentVariable;
 import com.syndicate.deployment.annotations.environment.EnvironmentVariables;
 import com.syndicate.deployment.annotations.lambda.LambdaHandler;
 import com.syndicate.deployment.model.DeploymentRuntime;
 import com.syndicate.deployment.model.RetentionSetting;
 import org.apache.http.HttpStatus;
-
 import javax.inject.Inject;
+import java.io.IOException;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @LambdaHandler(lambdaName = "api_handler",
         roleName = "api_handler-role",
@@ -26,11 +34,11 @@ import java.util.Map;
 @EnvironmentVariables(value = {
         @EnvironmentVariable(key = "region", value = "${region}"),
         @EnvironmentVariable(key = "tables_table", value = "${tables_table}"),
-        @EnvironmentVariable(key = "booking_userpool", value = "${booking_userpool}"),
+        @EnvironmentVariable(key = "team3_userpool", value = "${team3_userpool}"),
         @EnvironmentVariable(key = "coaches_table", value = "${coaches_table}"),
         @EnvironmentVariable(key = "admins_table", value = "${admins_table}")
 })
-public class ApiHandler implements RequestHandler<ApiHandler.APIRequest, APIGatewayProxyResponseEvent> {
+public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
 
     @Inject
     SignupService signupService;
@@ -39,101 +47,148 @@ public class ApiHandler implements RequestHandler<ApiHandler.APIRequest, APIGate
     SigninService signinService;
 
     @Inject
-    ProfileUpdateService profileUpdateService;
+    CognitoService cognitoService;
 
     @Inject
-    CognitoService cognitoService;
+    ProfileUpdateService updateService;
+
+    @Inject
+    LogoutService logoutService;
 
     public ApiHandler() {
         DaggerApiComponent.create().inject(this);
     }
 
     @Override
-    public APIGatewayProxyResponseEvent handleRequest(APIRequest requestEvent, Context context) {
+    public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent requestEvent, Context context) {
         System.out.println("API request received: " + requestEvent);
 
-        if (requestEvent.body_json() == null || requestEvent.body_json().isEmpty()) {
-            return new APIGatewayProxyResponseEvent()
-                    .withStatusCode(HttpStatus.SC_BAD_REQUEST)
-                    .withBody("{\"statusCode\":" + HttpStatus.SC_BAD_REQUEST + ",\"error\":\"Invalid request body\"}")
-                    .withHeaders(getCorsHeaders());
+        if (requestEvent.getBody() == null || requestEvent.getBody().isEmpty()) {
+            return response(HttpStatus.SC_BAD_REQUEST, "Invalid request body");
         }
 
-        String userPoolName = System.getenv("booking_userpool");
+        String userPoolName = System.getenv("team3_userpool");
         String userPoolId = cognitoService.getUserPoolId(userPoolName);
         if (userPoolId == null || userPoolId.isEmpty()) {
-            return new APIGatewayProxyResponseEvent()
-                    .withStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR)
-                    .withBody("{\"statusCode\":" + HttpStatus.SC_INTERNAL_SERVER_ERROR + ",\"error\":\"Unable to retrieve user pool ID\"}")
-                    .withHeaders(getCorsHeaders());
+            return response(HttpStatus.SC_INTERNAL_SERVER_ERROR, "Unable to retrieve user pool ID");
         }
 
-        switch (requestEvent.path()) {
+        switch (requestEvent.getPath()) {
             case "/signup":
-                return handleSignup(requestEvent.body_json(), userPoolId);
+                return handleSignup(requestEvent.getBody(), userPoolId);
             case "/signin":
-                return handleSignin(requestEvent.body_json(), userPoolId);
-            case "/updateProfile":
-                return handleUpdateProfile(requestEvent.body_json());
+                return handleSignin(requestEvent.getBody(), userPoolId);
+            case "/update":
+                String authToken = requestEvent.getHeaders().get("Authorization");
+                // Handle PUT requests for updating user details
+                return handleUpdate(requestEvent.getBody(), authToken);
+            case "/logout":
+                return handleLogout(requestEvent);
             default:
-                return new APIGatewayProxyResponseEvent()
-                        .withStatusCode(HttpStatus.SC_NOT_FOUND)
-                        .withBody("{\"statusCode\":" + HttpStatus.SC_NOT_FOUND + ",\"error\":\"Endpoint not found\"}")
-                        .withHeaders(getCorsHeaders());
+                return response(HttpStatus.SC_NOT_FOUND, "Endpoint not found");
         }
     }
 
-    private APIGatewayProxyResponseEvent handleSignup(Map<String, String> bodyJson, String userPoolId) {
-        System.out.println("Handling signup request and bodyJson is: " + bodyJson);
-
-        String error = signupService.signUpUser(bodyJson, userPoolId);
+    private APIGatewayProxyResponseEvent handleSignup(String bodyJson, String userPoolId) {
+        Map<String, String> bodyMap = parseBodyJson(bodyJson);
+        String error = signupService.signUpUser(bodyMap, userPoolId);
+        System.out.println("Error: " + error);
         if (error != null) {
-            return new APIGatewayProxyResponseEvent()
-                    .withStatusCode(HttpStatus.SC_BAD_REQUEST)
-                    .withBody("{\"statusCode\":" + HttpStatus.SC_BAD_REQUEST + ",\"error\":\"" + error + "\"}")
-                    .withHeaders(getCorsHeaders());
+            return response(HttpStatus.SC_BAD_REQUEST, error);
         }
-        return new APIGatewayProxyResponseEvent()
-                .withStatusCode(HttpStatus.SC_OK)
-                .withBody("{\"message\":\"User created successfully\"}")
-                .withHeaders(getCorsHeaders());
+        return response(HttpStatus.SC_OK, "User created successfully");
     }
 
-    private APIGatewayProxyResponseEvent handleSignin(Map<String, String> bodyJson, String userPoolId) {
+    private APIGatewayProxyResponseEvent handleSignin(String bodyJson, String userPoolId) {
+        Map<String, String> bodyMap = parseBodyJson(bodyJson);
         String clientId = cognitoService.createAppClient(userPoolId);
         if (clientId == null) {
-            return new APIGatewayProxyResponseEvent()
-                    .withStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR)
-                    .withBody("{\"statusCode\":" + HttpStatus.SC_INTERNAL_SERVER_ERROR + ",\"error\":\"Unable to create app client\"}")
-                    .withHeaders(getCorsHeaders());
+            return response(HttpStatus.SC_INTERNAL_SERVER_ERROR, "Unable to create app client");
         }
-        return signinService.signInUser(bodyJson, userPoolId, clientId)
-                .withHeaders(getCorsHeaders());
+        return signinService.signInUser(bodyMap, userPoolId, clientId);
     }
 
-    private APIGatewayProxyResponseEvent handleUpdateProfile(Map<String, String> bodyJson) {
-        String email = bodyJson.get("email");
-        String name = bodyJson.get("name");
-        String target = bodyJson.get("target");
-        String preferableActivity = bodyJson.get("preferableActivity");
-
+    private APIGatewayProxyResponseEvent handleUpdate(String bodyJson, String authToken) {
+        // Extract email from the JWT token (assuming Cognito JWT)
+        System.out.println("calling handleUpdate....");
+        System.out.println("Auth token: " + authToken);
+        System.out.println("Body: " + bodyJson);
+        String email = extractEmailFromAuthToken(authToken);
+        System.out.println("Email: " + email);
         if (email == null || email.isEmpty()) {
-            return new APIGatewayProxyResponseEvent()
-                    .withStatusCode(HttpStatus.SC_BAD_REQUEST)
-                    .withBody("{\"statusCode\":" + HttpStatus.SC_BAD_REQUEST + ",\"error\":\"Email is required\"}")
-                    .withHeaders(getCorsHeaders());
+            return response(HttpStatus.SC_UNAUTHORIZED, "Unauthorized: Invalid or missing token");
         }
 
-        String result = profileUpdateService.updateUserProfile(email, name, target, preferableActivity);
-        if (result.startsWith("Error")) {
-            return new APIGatewayProxyResponseEvent()
-                    .withStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR)
-                    .withBody("{\"statusCode\":" + HttpStatus.SC_INTERNAL_SERVER_ERROR + ",\"error\":\"" + result + "\"}")
-                    .withHeaders(getCorsHeaders());
+        // Parse the request body to get the details to update
+        Map<String, String> bodyMap = parseBodyJson(bodyJson);
+
+        // Collect all other attributes to update
+        Map<String, String> updateAttributes = bodyMap.entrySet()
+                .stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+        // Assuming your updateService uses the authenticated email as the key to update user details
+        String error = updateService.updateUserDetails(email, updateAttributes);
+        if (error != null) {
+            return response(HttpStatus.SC_BAD_REQUEST, error);
         }
+
+        return response(HttpStatus.SC_OK, "User details updated successfully");
+    }
+
+
+
+    private APIGatewayProxyResponseEvent handleLogout(APIGatewayProxyRequestEvent requestEvent) {
+        String authorizationHeader = requestEvent.getHeaders().get("Authorization");
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+            return response(HttpStatus.SC_BAD_REQUEST, "Missing or invalid Authorization header");
+        }
+
+        String token = authorizationHeader.substring("Bearer ".length()).trim();
+
+        try {
+            logoutService.signOutUser(token);
+            return response(HttpStatus.SC_OK, "User logged out successfully");
+        } catch (RuntimeException e) {
+            return response(HttpStatus.SC_BAD_REQUEST, e.getMessage());
+        }
+    }
+
+    private String extractEmailFromAuthToken(String authToken) {
+        if (authToken == null || !authToken.startsWith("Bearer ")) {
+            return null;
+        }
+
+        String token = authToken.substring(7); // Remove "Bearer " prefix
+
+        try {
+            // Decode the JWT token
+            DecodedJWT jwt = JWT.decode(token);
+            return jwt.getClaim("email").asString(); // Ensure "email" is the correct claim name
+        } catch (JWTDecodeException e) {
+            // Handle token decoding issues
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+
+    private Map<String, String> parseBodyJson(String bodyJson) {
+        // Convert JSON string to Map<String, String>
+        // Use your preferred JSON library here, e.g., Jackson, Gson, etc.
+        // For example:
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            return objectMapper.readValue(bodyJson, new TypeReference<Map<String, String>>() {});
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to parse request body JSON", e);
+        }
+    }
+
+    private APIGatewayProxyResponseEvent response(int statusCode, String message) {
         return new APIGatewayProxyResponseEvent()
-                .withStatusCode(HttpStatus.SC_OK)
-                .withBody("{\"message\":\"" + result + "\"}")
+                .withStatusCode(statusCode)
+                .withBody("{\"message\":\"" + message + "\"}")
                 .withHeaders(getCorsHeaders());
     }
 
@@ -144,6 +199,4 @@ public class ApiHandler implements RequestHandler<ApiHandler.APIRequest, APIGate
                 "Access-Control-Allow-Headers", "Content-Type, Authorization"
         );
     }
-
-    public record APIRequest(String method, String path, String authorization_header, Map<String, String> body_json) {}
 }

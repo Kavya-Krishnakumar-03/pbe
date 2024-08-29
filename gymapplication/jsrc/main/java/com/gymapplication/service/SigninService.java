@@ -1,10 +1,8 @@
-
 package com.gymapplication.service;
 
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 import software.amazon.awssdk.services.cognitoidentityprovider.CognitoIdentityProviderClient;
 import software.amazon.awssdk.services.cognitoidentityprovider.model.*;
-
 import javax.inject.Inject;
 import java.util.Map;
 
@@ -74,7 +72,6 @@ public class SigninService {
                 .withStatusCode(statusCode)
                 .withBody("{\"statusCode\":" + statusCode + ", \"message\":\"" + message + "\"}");
     }
-
 
     private String validateInput(Map<String, String> credentials) {
         if (credentials.get("email") == null || credentials.get("email").isEmpty()) {

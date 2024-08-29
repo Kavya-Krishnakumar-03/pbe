@@ -5,6 +5,7 @@ import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.gymapplication.handler.ApiHandler;
 import com.gymapplication.handler.ApiHandler_MembersInjector;
 import com.gymapplication.service.CognitoService;
+import com.gymapplication.service.LogoutService;
 import com.gymapplication.service.ProfileUpdateService;
 import com.gymapplication.service.SigninService;
 import com.gymapplication.service.SignupService;
@@ -78,14 +79,14 @@ public final class DaggerApiComponent {
 
     private Provider<SigninService> provideSigninServiceProvider;
 
+    private Provider<ProfileUpdateService> provideProfileUpdateServiceProvider;
+
+    private Provider<LogoutService> provideLogoutServiceProvider;
+
     private ApiComponentImpl(ApiModule apiModuleParam, ServiceModule serviceModuleParam) {
 
       initialize(apiModuleParam, serviceModuleParam);
 
-    }
-
-    private ProfileUpdateService profileUpdateService() {
-      return new ProfileUpdateService(provideDynamoDBProvider.get());
     }
 
     private CognitoService cognitoService() {
@@ -99,6 +100,8 @@ public final class DaggerApiComponent {
       this.provideDynamoDBProvider = DoubleCheck.provider(ApiModule_ProvideDynamoDBFactory.create(apiModuleParam));
       this.provideSignupServiceProvider = DoubleCheck.provider(ServiceModule_ProvideSignupServiceFactory.create(serviceModuleParam, provideCognitoClientProvider, provideDynamoDBProvider));
       this.provideSigninServiceProvider = DoubleCheck.provider(ServiceModule_ProvideSigninServiceFactory.create(serviceModuleParam, provideCognitoClientProvider));
+      this.provideProfileUpdateServiceProvider = DoubleCheck.provider(ServiceModule_ProvideProfileUpdateServiceFactory.create(serviceModuleParam, provideDynamoDBProvider));
+      this.provideLogoutServiceProvider = DoubleCheck.provider(ServiceModule_ProvideLogoutServiceFactory.create(serviceModuleParam, provideCognitoClientProvider));
     }
 
     @Override
@@ -110,8 +113,9 @@ public final class DaggerApiComponent {
     private ApiHandler injectApiHandler(ApiHandler instance) {
       ApiHandler_MembersInjector.injectSignupService(instance, provideSignupServiceProvider.get());
       ApiHandler_MembersInjector.injectSigninService(instance, provideSigninServiceProvider.get());
-      ApiHandler_MembersInjector.injectProfileUpdateService(instance, profileUpdateService());
       ApiHandler_MembersInjector.injectCognitoService(instance, cognitoService());
+      ApiHandler_MembersInjector.injectUpdateService(instance, provideProfileUpdateServiceProvider.get());
+      ApiHandler_MembersInjector.injectLogoutService(instance, provideLogoutServiceProvider.get());
       return instance;
     }
   }

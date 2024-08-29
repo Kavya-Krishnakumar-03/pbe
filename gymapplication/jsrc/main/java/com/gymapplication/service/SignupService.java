@@ -31,7 +31,6 @@ public class SignupService {
             return validationError;
         }
 
-        // Determine user role based on the email
         String role = determineUserRole(userDetails.get("email"));
 
         try {
@@ -69,33 +68,36 @@ public class SignupService {
             return "Error signing up user: " + e.awsErrorDetails().errorMessage();
         }
     }
+    private static final Pattern ALPHANUMERIC_PATTERN = Pattern.compile(".*[a-zA-Z].*");
+    private static final Pattern NUMERIC_PATTERN = Pattern.compile("^\\d+$");
 
     private String validateInput(Map<String, String> userDetails) {
+//
         if (userDetails.get("email") == null || !EMAIL_PATTERN.matcher(userDetails.get("email")).matches()) {
             return "Invalid email format.";
         }
+
+        // Validate password
         if (userDetails.get("password") == null || userDetails.get("password").length() < MIN_PASSWORD_LENGTH) {
             return "Password must be at least " + MIN_PASSWORD_LENGTH + " characters long.";
         }
-        if (userDetails.get("name") == null || userDetails.get("name").isEmpty()) {
-            return "Name is required.";
-        }
-        if (userDetails.get("target") == null || userDetails.get("target").isEmpty()) {
-            return "Target is required.";
-        }
-        if (userDetails.get("preferableActivity") == null || userDetails.get("preferableActivity").isEmpty()) {
-            return "Preferable activity is required.";
+
+        // Validate name
+        String name = userDetails.get("name");
+        if (name == null || name.isEmpty() || NUMERIC_PATTERN.matcher(name).matches() || !ALPHANUMERIC_PATTERN.matcher(name).matches()) {
+            return "Name is required and must contain at least one alphabetic character and cannot be purely numeric.";
         }
 
-        // Additional validations for string fields
-        if (!(userDetails.get("name") instanceof String)) {
-            return "Name must be a string.";
+        // Validate target
+        String target = userDetails.get("target");
+        if (target == null || target.isEmpty() || NUMERIC_PATTERN.matcher(target).matches() || !ALPHANUMERIC_PATTERN.matcher(target).matches()) {
+            return "Target is required and must contain at least one alphabetic character and cannot be purely numeric.";
         }
-        if (!(userDetails.get("target") instanceof String)) {
-            return "Target must be a string.";
-        }
-        if (!(userDetails.get("preferableActivity") instanceof String)) {
-            return "Preferable activity must be a string.";
+
+        // Validate preferableActivity
+        String preferableActivity = userDetails.get("preferableActivity");
+        if (preferableActivity == null || preferableActivity.isEmpty() || NUMERIC_PATTERN.matcher(preferableActivity).matches() || !ALPHANUMERIC_PATTERN.matcher(preferableActivity).matches()) {
+            return "Preferable activity is required and must contain at least one alphabetic character and cannot be purely numeric.";
         }
 
         // Check for duplicate email (optional, can be handled by Cognito as well)
