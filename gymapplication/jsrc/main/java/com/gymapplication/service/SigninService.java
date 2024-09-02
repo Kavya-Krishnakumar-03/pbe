@@ -56,9 +56,9 @@ public class SigninService {
 
             return new APIGatewayProxyResponseEvent()
                     .withStatusCode(200)
-                    .withBody("{\"id_token\":\"" + authResult.idToken() + "\"}");
+                    .withBody("{\"id_token\":\"" + authResult.idToken() + "\"}")
+                    .withHeaders(getCorsHeaders());
         } catch (NotAuthorizedException e) {
-
             return createErrorResponse(401, "Incorrect username or password.");
         } catch (UserNotFoundException e) {
             return createErrorResponse(404, "User not found.");
@@ -70,7 +70,17 @@ public class SigninService {
     private APIGatewayProxyResponseEvent createErrorResponse(int statusCode, String message) {
         return new APIGatewayProxyResponseEvent()
                 .withStatusCode(statusCode)
-                .withBody("{\"statusCode\":" + statusCode + ", \"message\":\"" + message + "\"}");
+                .withBody("{\"statusCode\":" + statusCode + ", \"message\":\"" + message + "\"}")
+                .withHeaders(getCorsHeaders());
+    }
+
+    private Map<String, String> getCorsHeaders() {
+        return Map.of(
+                "Access-Control-Allow-Origin", "*",
+                "Access-Control-Allow-Methods", "POST, GET, OPTIONS",
+                "Access-Control-Allow-Headers", "Content-Type, X-Amz-Date, Authorization, X-Api-Key, X-Amz-Security-Token",
+                "Accept-Version", "*"
+        );
     }
 
     private String validateInput(Map<String, String> credentials) {
@@ -83,10 +93,3 @@ public class SigninService {
         return null;
     }
 }
-
-
-
-
-
-
- 

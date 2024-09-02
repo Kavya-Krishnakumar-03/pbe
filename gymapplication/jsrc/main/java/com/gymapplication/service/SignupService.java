@@ -25,7 +25,7 @@ public class SignupService {
     }
 
     public String signUpUser(Map<String, String> userDetails, String userPoolId) {
-        // Validate input
+
         String validationError = validateInput(userDetails);
         if (validationError != null) {
             return validationError;
@@ -36,7 +36,7 @@ public class SignupService {
         try {
             List<AttributeType> userAttributes = new ArrayList<>();
             userAttributes.add(AttributeType.builder().name("email").value(userDetails.get("email")).build());
-//            userAttributes.add(AttributeType.builder().name("custom:role").value(role).build()); // Set the role attribute
+
 
             AdminCreateUserRequest createUserRequest = AdminCreateUserRequest.builder()
                     .userPoolId(userPoolId)
@@ -48,7 +48,7 @@ public class SignupService {
 
             identityProviderClient.adminCreateUser(createUserRequest);
 
-            // Store user details in DynamoDB
+
             Map<String, AttributeValue> item = new HashMap<>();
             item.put("email", new AttributeValue().withS(userDetails.get("email")));
             item.put("name", new AttributeValue().withS(userDetails.get("name")));
@@ -62,7 +62,7 @@ public class SignupService {
 
             System.out.println("User signed up successfully.");
 
-            return null; // No error
+            return null;
         } catch (CognitoIdentityProviderException e) {
             System.err.println("Error signing up user: " + e.awsErrorDetails().errorMessage());
             return "Error signing up user: " + e.awsErrorDetails().errorMessage();
@@ -72,40 +72,35 @@ public class SignupService {
     private static final Pattern NUMERIC_PATTERN = Pattern.compile("^\\d+$");
 
     private String validateInput(Map<String, String> userDetails) {
-//
+
         if (userDetails.get("email") == null || !EMAIL_PATTERN.matcher(userDetails.get("email")).matches()) {
             return "Invalid email format.";
         }
 
-        // Validate password
         if (userDetails.get("password") == null || userDetails.get("password").length() < MIN_PASSWORD_LENGTH) {
             return "Password must be at least " + MIN_PASSWORD_LENGTH + " characters long.";
         }
 
-        // Validate name
         String name = userDetails.get("name");
         if (name == null || name.isEmpty() || NUMERIC_PATTERN.matcher(name).matches() || !ALPHANUMERIC_PATTERN.matcher(name).matches()) {
             return "Name is required and must contain at least one alphabetic character and cannot be purely numeric.";
         }
 
-        // Validate target
         String target = userDetails.get("target");
         if (target == null || target.isEmpty() || NUMERIC_PATTERN.matcher(target).matches() || !ALPHANUMERIC_PATTERN.matcher(target).matches()) {
             return "Target is required and must contain at least one alphabetic character and cannot be purely numeric.";
         }
 
-        // Validate preferableActivity
         String preferableActivity = userDetails.get("preferableActivity");
         if (preferableActivity == null || preferableActivity.isEmpty() || NUMERIC_PATTERN.matcher(preferableActivity).matches() || !ALPHANUMERIC_PATTERN.matcher(preferableActivity).matches()) {
             return "Preferable activity is required and must contain at least one alphabetic character and cannot be purely numeric.";
         }
 
-        // Check for duplicate email (optional, can be handled by Cognito as well)
         if (isEmailAlreadyRegistered(userDetails.get("email"))) {
             return "Email is already registered.";
         }
 
-        return null; // No validation errors
+        return null;
     }
 
     private String determineUserRole(String email) {
@@ -114,7 +109,7 @@ public class SignupService {
         } else if (isEmailInTable(email, System.getenv("admins_table"))) {
             return "admin";
         } else {
-            return "client"; // Default role
+            return "client";
         }
     }
 
@@ -128,22 +123,20 @@ public class SignupService {
             return item != null && !item.isEmpty();
         } catch (Exception e) {
             System.err.println("Error checking email in " + tableName + " table: " + e.getMessage());
-            return false; // In case of an error, assume the email is not in the table
+            return false;
         }
     }
 
     private boolean isEmailAlreadyRegistered(String email) {
-        // Check in DynamoDB
         if (isEmailInDynamoDB(email)) {
             return true;
         }
 
-        // Check in Cognito
         if (isEmailInCognito(email)) {
             return true;
         }
 
-        return false; // Email is not registered
+        return false;
     }
 
     private boolean isEmailInDynamoDB(String email) {
@@ -156,7 +149,7 @@ public class SignupService {
             return item != null && !item.isEmpty();
         } catch (Exception e) {
             System.err.println("Error checking email in DynamoDB: " + e.getMessage());
-            return false; // In case of an error, assume the email is not in DynamoDB
+            return false;
         }
     }
 
@@ -173,7 +166,7 @@ public class SignupService {
             return !response.users().isEmpty();
         } catch (CognitoIdentityProviderException e) {
             System.err.println("Error checking email in Cognito: " + e.awsErrorDetails().errorMessage());
-            return false; // In case of an error, assume the email is not in Cognito
+            return false;
         }
     }
 }

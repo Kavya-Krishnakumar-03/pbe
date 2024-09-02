@@ -4,11 +4,11 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.gymapplication.handler.ApiHandler;
 import com.gymapplication.handler.ApiHandler_MembersInjector;
+import com.gymapplication.service.CoachService;
 import com.gymapplication.service.CognitoService;
-import com.gymapplication.service.LogoutService;
-import com.gymapplication.service.ProfileUpdateService;
 import com.gymapplication.service.SigninService;
 import com.gymapplication.service.SignupService;
+import com.gymapplication.service.UpdateService;
 import dagger.internal.DaggerGenerated;
 import dagger.internal.DoubleCheck;
 import dagger.internal.Preconditions;
@@ -79,9 +79,9 @@ public final class DaggerApiComponent {
 
     private Provider<SigninService> provideSigninServiceProvider;
 
-    private Provider<ProfileUpdateService> provideProfileUpdateServiceProvider;
+    private Provider<UpdateService> provideUpdateServiceProvider;
 
-    private Provider<LogoutService> provideLogoutServiceProvider;
+    private Provider<CoachService> provideCoachServiceProvider;
 
     private ApiComponentImpl(ApiModule apiModuleParam, ServiceModule serviceModuleParam) {
 
@@ -100,8 +100,8 @@ public final class DaggerApiComponent {
       this.provideDynamoDBProvider = DoubleCheck.provider(ApiModule_ProvideDynamoDBFactory.create(apiModuleParam));
       this.provideSignupServiceProvider = DoubleCheck.provider(ServiceModule_ProvideSignupServiceFactory.create(serviceModuleParam, provideCognitoClientProvider, provideDynamoDBProvider));
       this.provideSigninServiceProvider = DoubleCheck.provider(ServiceModule_ProvideSigninServiceFactory.create(serviceModuleParam, provideCognitoClientProvider));
-      this.provideProfileUpdateServiceProvider = DoubleCheck.provider(ServiceModule_ProvideProfileUpdateServiceFactory.create(serviceModuleParam, provideDynamoDBProvider));
-      this.provideLogoutServiceProvider = DoubleCheck.provider(ServiceModule_ProvideLogoutServiceFactory.create(serviceModuleParam, provideCognitoClientProvider));
+      this.provideUpdateServiceProvider = DoubleCheck.provider(ServiceModule_ProvideUpdateServiceFactory.create(serviceModuleParam, provideDynamoDBProvider));
+      this.provideCoachServiceProvider = DoubleCheck.provider(ServiceModule_ProvideCoachServiceFactory.create(serviceModuleParam, provideDynamoDBProvider));
     }
 
     @Override
@@ -114,8 +114,8 @@ public final class DaggerApiComponent {
       ApiHandler_MembersInjector.injectSignupService(instance, provideSignupServiceProvider.get());
       ApiHandler_MembersInjector.injectSigninService(instance, provideSigninServiceProvider.get());
       ApiHandler_MembersInjector.injectCognitoService(instance, cognitoService());
-      ApiHandler_MembersInjector.injectUpdateService(instance, provideProfileUpdateServiceProvider.get());
-      ApiHandler_MembersInjector.injectLogoutService(instance, provideLogoutServiceProvider.get());
+      ApiHandler_MembersInjector.injectUpdateService(instance, provideUpdateServiceProvider.get());
+      ApiHandler_MembersInjector.injectCoachService(instance, provideCoachServiceProvider.get());
       return instance;
     }
   }

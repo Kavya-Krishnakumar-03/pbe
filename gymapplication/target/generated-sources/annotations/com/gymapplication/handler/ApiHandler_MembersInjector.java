@@ -1,10 +1,10 @@
 package com.gymapplication.handler;
 
+import com.gymapplication.service.CoachService;
 import com.gymapplication.service.CognitoService;
-import com.gymapplication.service.LogoutService;
-import com.gymapplication.service.ProfileUpdateService;
 import com.gymapplication.service.SigninService;
 import com.gymapplication.service.SignupService;
+import com.gymapplication.service.UpdateService;
 import dagger.MembersInjector;
 import dagger.internal.DaggerGenerated;
 import dagger.internal.InjectedFieldSignature;
@@ -31,28 +31,26 @@ public final class ApiHandler_MembersInjector implements MembersInjector<ApiHand
 
   private final Provider<CognitoService> cognitoServiceProvider;
 
-  private final Provider<ProfileUpdateService> updateServiceProvider;
+  private final Provider<UpdateService> updateServiceProvider;
 
-  private final Provider<LogoutService> logoutServiceProvider;
+  private final Provider<CoachService> coachServiceProvider;
 
   public ApiHandler_MembersInjector(Provider<SignupService> signupServiceProvider,
       Provider<SigninService> signinServiceProvider,
       Provider<CognitoService> cognitoServiceProvider,
-      Provider<ProfileUpdateService> updateServiceProvider,
-      Provider<LogoutService> logoutServiceProvider) {
+      Provider<UpdateService> updateServiceProvider, Provider<CoachService> coachServiceProvider) {
     this.signupServiceProvider = signupServiceProvider;
     this.signinServiceProvider = signinServiceProvider;
     this.cognitoServiceProvider = cognitoServiceProvider;
     this.updateServiceProvider = updateServiceProvider;
-    this.logoutServiceProvider = logoutServiceProvider;
+    this.coachServiceProvider = coachServiceProvider;
   }
 
   public static MembersInjector<ApiHandler> create(Provider<SignupService> signupServiceProvider,
       Provider<SigninService> signinServiceProvider,
       Provider<CognitoService> cognitoServiceProvider,
-      Provider<ProfileUpdateService> updateServiceProvider,
-      Provider<LogoutService> logoutServiceProvider) {
-    return new ApiHandler_MembersInjector(signupServiceProvider, signinServiceProvider, cognitoServiceProvider, updateServiceProvider, logoutServiceProvider);
+      Provider<UpdateService> updateServiceProvider, Provider<CoachService> coachServiceProvider) {
+    return new ApiHandler_MembersInjector(signupServiceProvider, signinServiceProvider, cognitoServiceProvider, updateServiceProvider, coachServiceProvider);
   }
 
   @Override
@@ -61,7 +59,7 @@ public final class ApiHandler_MembersInjector implements MembersInjector<ApiHand
     injectSigninService(instance, signinServiceProvider.get());
     injectCognitoService(instance, cognitoServiceProvider.get());
     injectUpdateService(instance, updateServiceProvider.get());
-    injectLogoutService(instance, logoutServiceProvider.get());
+    injectCoachService(instance, coachServiceProvider.get());
   }
 
   @InjectedFieldSignature("com.gymapplication.handler.ApiHandler.signupService")
@@ -80,12 +78,12 @@ public final class ApiHandler_MembersInjector implements MembersInjector<ApiHand
   }
 
   @InjectedFieldSignature("com.gymapplication.handler.ApiHandler.updateService")
-  public static void injectUpdateService(ApiHandler instance, ProfileUpdateService updateService) {
+  public static void injectUpdateService(ApiHandler instance, UpdateService updateService) {
     instance.updateService = updateService;
   }
 
-  @InjectedFieldSignature("com.gymapplication.handler.ApiHandler.logoutService")
-  public static void injectLogoutService(ApiHandler instance, LogoutService logoutService) {
-    instance.logoutService = logoutService;
+  @InjectedFieldSignature("com.gymapplication.handler.ApiHandler.coachService")
+  public static void injectCoachService(ApiHandler instance, CoachService coachService) {
+    instance.coachService = coachService;
   }
 }

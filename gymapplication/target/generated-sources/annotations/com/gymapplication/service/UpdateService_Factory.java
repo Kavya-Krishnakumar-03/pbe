@@ -21,24 +21,23 @@ import javax.inject.Provider;
     "KotlinInternal",
     "KotlinInternalInJava"
 })
-public final class ProfileUpdateService_Factory implements Factory<ProfileUpdateService> {
+public final class UpdateService_Factory implements Factory<UpdateService> {
   private final Provider<AmazonDynamoDB> amazonDynamoDBProvider;
 
-  public ProfileUpdateService_Factory(Provider<AmazonDynamoDB> amazonDynamoDBProvider) {
+  public UpdateService_Factory(Provider<AmazonDynamoDB> amazonDynamoDBProvider) {
     this.amazonDynamoDBProvider = amazonDynamoDBProvider;
   }
 
   @Override
-  public ProfileUpdateService get() {
+  public UpdateService get() {
     return newInstance(amazonDynamoDBProvider.get());
   }
 
-  public static ProfileUpdateService_Factory create(
-      Provider<AmazonDynamoDB> amazonDynamoDBProvider) {
-    return new ProfileUpdateService_Factory(amazonDynamoDBProvider);
+  public static UpdateService_Factory create(Provider<AmazonDynamoDB> amazonDynamoDBProvider) {
+    return new UpdateService_Factory(amazonDynamoDBProvider);
   }
 
-  public static ProfileUpdateService newInstance(AmazonDynamoDB amazonDynamoDB) {
-    return new ProfileUpdateService(amazonDynamoDB);
+  public static UpdateService newInstance(AmazonDynamoDB amazonDynamoDB) {
+    return new UpdateService(amazonDynamoDB);
   }
 }

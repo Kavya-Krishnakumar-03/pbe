@@ -1,42 +1,43 @@
-{"lambda-basic-execution": {
-  "policy_content": {
-    "Statement": [
-      {
-        "Action": [
-          "logs:CreateLogGroup",
-          "logs:CreateLogStream",
-          "logs:PutLogEvents",
-          "dynamodb:GetItem",
-          "dynamodb:Query",
-          "dynamodb:PutItem",
-          "dynamodb:Batch*",
-          "dynamodb:DeleteItem",
-          "dynamodb:UpdateItem",
-          "ssm:PutParameter",
-          "ssm:GetParameter",
-          "kms:Decrypt",
-          "cognito-idp:AdminInitiateAuth",
-          "cognito-idp:AdminRespondToAuthChallenge",
-          "cognito-idp:SignUp",
-          "cognito-idp:ListUserPools",
-          "cognito-idp:ListUserPoolClients",
-          "cognito-idp:AdminCreateUser",
-          "cognito-idp:AdminConfirmSignUp",
-          "cognito-idp:CreateUserPoolClient",
-          "cognito-idp:AdminInitiateAuth",
-          "cognito-idp:AdminRespondToAuthChallenge",
-          "dynamodb:Scan",
-          "cognito-idp:GlobalSignOut",
-          "cognito-idp:AdminUserGlobalSignOut"
-        ],
-        "Effect": "Allow",
-        "Resource": "*"
-      }
-    ],
-    "Version": "2012-10-17"
+{
+  "lambda-basic-execution": {
+    "policy_content": {
+      "Statement": [
+        {
+          "Action": [
+            "logs:CreateLogGroup",
+            "logs:CreateLogStream",
+            "logs:PutLogEvents",
+            "dynamodb:GetItem",
+            "dynamodb:Query",
+            "dynamodb:PutItem",
+            "dynamodb:Batch*",
+            "dynamodb:DeleteItem",
+            "dynamodb:UpdateItem",
+            "ssm:PutParameter",
+            "ssm:GetParameter",
+            "kms:Decrypt",
+            "cognito-idp:AdminInitiateAuth",
+            "cognito-idp:AdminRespondToAuthChallenge",
+            "cognito-idp:SignUp",
+            "cognito-idp:ListUserPools",
+            "cognito-idp:ListUserPoolClients",
+            "cognito-idp:AdminCreateUser",
+            "cognito-idp:AdminConfirmSignUp",
+            "cognito-idp:CreateUserPoolClient",
+            "cognito-idp:AdminInitiateAuth",
+            "cognito-idp:AdminRespondToAuthChallenge",
+            "dynamodb:Scan",
+            "cognito-idp:GlobalSignOut",
+            "cognito-idp:AdminUserGlobalSignOut"
+          ],
+          "Effect": "Allow",
+          "Resource": "*"
+        }
+      ],
+      "Version": "2012-10-17"
+    },
+    "resource_type": "iam_policy"
   },
-  "resource_type": "iam_policy"
-},
   "api_handler-role": {
     "predefined_policies": [],
     "principal_service": "lambda",
@@ -45,7 +46,6 @@
     ],
     "resource_type": "iam_role"
   },
-
   "Users": {
     "resource_type": "dynamodb_table",
     "hash_key_name": "email",
@@ -56,7 +56,7 @@
     "autoscaling": []
   },
 
-  "team3-userpool": {
+  "simple-booking-userpool": {
     "resource_type": "cognito_idp",
     "password_policy": {
       "minimum_length": 8,
@@ -79,7 +79,7 @@
       }
     ],
     "client": {
-      "client_name" : "api_client_syndicate"
+      "client_name": "api_client_syndicate"
     }
   },
 
@@ -91,7 +91,7 @@
         "type": "COGNITO_USER_POOLS",
         "identity_source": "method.request.header.Authorization",
         "user_pools": [
-          "team3-userpool"
+          "simple-booking-userpool"
         ],
         "ttl": 300
       }
@@ -111,9 +111,7 @@
             "application/json": "{\"method\": \"$context.httpMethod\", \"path\": \"$context.resourcePath\", \"authorization_header\": \"$input.params('Authorization')\", \"body_json\": $input.json('$')}"
           },
           "responses": [],
-          "integration_responses": [
-
-          ],
+          "integration_responses": [],
           "default_error_pattern": true
         }
       },
@@ -134,7 +132,6 @@
           "default_error_pattern": true
         }
       },
-
       "/update": {
         "enable_cors": true,
         "PUT": {
@@ -154,9 +151,9 @@
         }
       },
 
-      "/logout": {
+      "/coaches": {
         "enable_cors": true,
-        "POST": {
+        "GET": {
           "enable_proxy": true,
           "authorization_type": "authorizer",
           "authorization_header": "Authorization",
@@ -165,7 +162,7 @@
           "api_key_required": false,
           "method_request_parameters": {},
           "integration_request_body_template": {
-            "application/json": "{\"method\": \"$context.httpMethod\", \"path\": \"$context.resourcePath\", \"authorization_header\": \"$input.params('Authorization')\", \"body_json\": $input.json('$')}"
+            "application/json": "{\"method\": \"$context.httpMethod\", \"path\": \"$context.resourcePath\", \"authorization_header\": \"$input.params('Authorization')\"}"
           },
           "responses": [],
           "integration_responses": [],
@@ -175,5 +172,6 @@
 
     },
     "minimum_compression_size": 0
+
   }
 }
