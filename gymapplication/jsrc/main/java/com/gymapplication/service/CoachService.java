@@ -1,16 +1,16 @@
-//package com.gymapplication.service;
-//
-//import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
-//import com.amazonaws.services.dynamodbv2.model.AttributeValue;
-//import com.amazonaws.services.dynamodbv2.model.ScanRequest;
-//import com.amazonaws.services.dynamodbv2.model.ScanResult;
-//import javax.inject.Inject;
-//import java.nio.ByteBuffer;
-//import java.nio.charset.StandardCharsets;
-//import java.util.List;
-//import java.util.Map;
-//import java.util.stream.Collectors;
-//
+package com.gymapplication.service;
+
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
+import com.amazonaws.services.dynamodbv2.model.AttributeValue;
+import com.amazonaws.services.dynamodbv2.model.ScanRequest;
+import com.amazonaws.services.dynamodbv2.model.ScanResult;
+import javax.inject.Inject;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 //public class CoachService {
 //
 //    @Inject
@@ -81,12 +81,11 @@
 //}
 //
 
-package com.gymapplication.service;
-
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.dynamodbv2.model.ScanRequest;
 import com.amazonaws.services.dynamodbv2.model.ScanResult;
+
 import javax.inject.Inject;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -130,10 +129,6 @@ public class CoachService {
 
                 System.out.println("Mapping coach item: " + item.get("Name").getS());
 
-                // Use the coach's email to generate the BookWorkoutUrl
-                String email = item.get("Email").getS();
-                String bookWorkoutUrl = generateBookWorkoutUrl(email);
-
                 return Map.of(
                         "Name", item.get("Name") != null ? item.get("Name").getS() : "",
                         "Summary", item.get("Summary") != null ? item.get("Summary").getS() : "",
@@ -141,20 +136,13 @@ public class CoachService {
                         "Ratings", item.get("Ratings") != null ? item.get("Ratings").getN() : "0",
                         "ProfilePictureUrl", profilePictureUrl,
                         "ClientReviews", clientReviews,
-                        "BookWorkoutUrl", bookWorkoutUrl
+                        "Email", item.get("Email") != null ? item.get("Email").getS() : ""
                 );
             }).collect(Collectors.toList());
         } catch (Exception e) {
             System.out.println("Error during DynamoDB scan: " + e.getMessage());
             throw e;
         }
-    }
-
-    private String generateBookWorkoutUrl(String email) {
-        String baseUrl = "https://gymapp.com/book-workout?coachEmail=";
-        String bookWorkoutUrl = baseUrl + email;
-        System.out.println("Generated BookWorkoutUrl: " + bookWorkoutUrl);
-        return bookWorkoutUrl;
     }
 
     private String decodeBinaryToUrl(AttributeValue profilePictureBinary) {
@@ -171,5 +159,6 @@ public class CoachService {
         System.out.println("ProfilePictureUrl decoded to URL: " + url);
         return url;
     }
+
 }
 

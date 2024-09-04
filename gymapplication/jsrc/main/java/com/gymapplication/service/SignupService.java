@@ -12,7 +12,9 @@ import java.util.regex.Pattern;
 
 public class SignupService {
 
-    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
+    private static final Pattern EMAIL_PATTERN = Pattern.compile(
+            "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.(com|org|net|edu|gov|mil|biz|info|mobi|name|aero|jobs|museum)$"
+    );
     private static final int MIN_PASSWORD_LENGTH = 8;
 
     private final CognitoIdentityProviderClient identityProviderClient;
@@ -42,11 +44,12 @@ public class SignupService {
                     .username(userDetails.get("email"))
                     .userAttributes(userAttributes)
                     .temporaryPassword(userDetails.get("password"))
-                    .messageAction(MessageActionType.SUPPRESS)
+                    .messageAction(MessageActionType.SUPPRESS) // Suppress email notification
                     .build();
 
             identityProviderClient.adminCreateUser(createUserRequest);
 
+            // Save user details in DynamoDB
             Map<String, AttributeValue> item = new HashMap<>();
             item.put("email", new AttributeValue().withS(userDetails.get("email")));
             item.put("name", new AttributeValue().withS(userDetails.get("name")));
@@ -59,13 +62,17 @@ public class SignupService {
                     .withItem(item));
 
             System.out.println("User signed up successfully.");
-
-            return null;
+            return "User created successfully";
+        } catch (InvalidParameterException e) {
+            System.err.println("Error during signup: " + e.getMessage());
+            return "Error during signup: Invalid input.";
         } catch (CognitoIdentityProviderException e) {
             System.err.println("Error signing up user: " + e.awsErrorDetails().errorMessage());
             return "Error signing up user: " + e.awsErrorDetails().errorMessage();
         }
     }
+
+
 
     private static final Pattern ALPHANUMERIC_PATTERN = Pattern.compile(".*[a-zA-Z].*");
     private static final Pattern NUMERIC_PATTERN = Pattern.compile("^\\d+$");
@@ -73,7 +80,7 @@ public class SignupService {
     private String validateInput(Map<String, String> userDetails) {
 
         if (userDetails.get("email") == null || !EMAIL_PATTERN.matcher(userDetails.get("email")).matches()) {
-            return "Invalid email format.";
+            return "Invalid email format or unsupported domain.";
         }
 
         if (userDetails.get("password") == null || userDetails.get("password").length() < MIN_PASSWORD_LENGTH) {
