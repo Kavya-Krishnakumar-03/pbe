@@ -34,7 +34,8 @@ import java.util.stream.Collectors;
         @EnvironmentVariable(key = "tables_table", value = "${tables_table}"),
         @EnvironmentVariable(key = "booking_userpool", value = "${booking_userpool}"),
         @EnvironmentVariable(key = "coaches_table", value = "${coaches_table}"),
-        @EnvironmentVariable(key = "admins_table", value = "${admins_table}")
+        @EnvironmentVariable(key = "admins_table", value = "${admins_table}"),
+        @EnvironmentVariable(key = "coach_details_table", value = "${coach_details_table}")
 })
 public class ApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
 

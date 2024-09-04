@@ -102,7 +102,7 @@ public class CoachService {
 
     public CoachService(AmazonDynamoDB amazonDynamoDB) {
         this.dynamoDB = amazonDynamoDB;
-        this.coachesTable = "coach";
+        this.coachesTable = "coach-details";
     }
 
     public List<Map<String, Object>> getAvailableCoaches() {
@@ -129,6 +129,7 @@ public class CoachService {
 
                 System.out.println("Mapping coach item: " + item.get("Name").getS());
 
+                assert profilePictureUrl != null;
                 return Map.of(
                         "Name", item.get("Name") != null ? item.get("Name").getS() : "",
                         "Summary", item.get("Summary") != null ? item.get("Summary").getS() : "",
@@ -136,7 +137,7 @@ public class CoachService {
                         "Ratings", item.get("Ratings") != null ? item.get("Ratings").getN() : "0",
                         "ProfilePictureUrl", profilePictureUrl,
                         "ClientReviews", clientReviews,
-                        "Email", item.get("Email") != null ? item.get("Email").getS() : ""
+                        "email", item.get("email") != null ? item.get("email").getS() : ""
                 );
             }).collect(Collectors.toList());
         } catch (Exception e) {
