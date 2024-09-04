@@ -12,7 +12,7 @@ import java.util.regex.Pattern;
 
 public class SignupService {
 
-    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$");
+    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
     private static final int MIN_PASSWORD_LENGTH = 8;
 
     private final CognitoIdentityProviderClient identityProviderClient;
@@ -25,7 +25,6 @@ public class SignupService {
     }
 
     public String signUpUser(Map<String, String> userDetails, String userPoolId) {
-
         String validationError = validateInput(userDetails);
         if (validationError != null) {
             return validationError;
@@ -36,7 +35,7 @@ public class SignupService {
         try {
             List<AttributeType> userAttributes = new ArrayList<>();
             userAttributes.add(AttributeType.builder().name("email").value(userDetails.get("email")).build());
-
+            // userAttributes.add(AttributeType.builder().name("custom:role").value(role).build()); // Uncomment to set the role attribute in Cognito
 
             AdminCreateUserRequest createUserRequest = AdminCreateUserRequest.builder()
                     .userPoolId(userPoolId)
@@ -47,7 +46,6 @@ public class SignupService {
                     .build();
 
             identityProviderClient.adminCreateUser(createUserRequest);
-
 
             Map<String, AttributeValue> item = new HashMap<>();
             item.put("email", new AttributeValue().withS(userDetails.get("email")));
@@ -68,6 +66,7 @@ public class SignupService {
             return "Error signing up user: " + e.awsErrorDetails().errorMessage();
         }
     }
+
     private static final Pattern ALPHANUMERIC_PATTERN = Pattern.compile(".*[a-zA-Z].*");
     private static final Pattern NUMERIC_PATTERN = Pattern.compile("^\\d+$");
 
